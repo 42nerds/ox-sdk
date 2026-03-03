@@ -8,22 +8,20 @@ Python SDK for the OXCloud Provisioning REST API v2.
 
 ## Installation
 
-This is a private package. Install via SSH from GitHub:
-
 ```bash
-pip install git+ssh://git@github.com/42nerds/ox-sdk.git
+pip install git+https://github.com/42nerds/ox-sdk.git
 ```
 
 Pin to a specific version tag:
 
 ```bash
-pip install git+ssh://git@github.com/42nerds/ox-sdk.git@v0.1.0
+pip install git+https://github.com/42nerds/ox-sdk.git@v1.0.0
 ```
 
 In `requirements.txt`:
 
 ```
-ox-cloud-sdk @ git+ssh://git@github.com/42nerds/ox-sdk.git@v0.1.0
+ox-cloud-sdk @ git+https://github.com/42nerds/ox-sdk.git@v1.0.0
 ```
 
 ## Usage
