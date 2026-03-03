@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.2.0 (2026-03-03)
+
+### Features
+
+- Add MIT license and update install instructions for public repo
+  ([`c94e551`](https://github.com/42nerds/ox-sdk/commit/c94e55159bc2148cea8b53dc024616ffc445fe11))
+
+
 ## v1.1.0 (2026-03-03)
 
 ### Features
