@@ -48,3 +48,17 @@ ignore = [
 # ---------------------------------------------------------------------------
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+# ---------------------------------------------------------------------------
+# Semantic Release
+# ---------------------------------------------------------------------------
+[tool.semantic_release]
+version_toml = ["pyproject.toml:project.version"]
+major_on_zero = false
+
+[tool.semantic_release.remote]
+token = { env = "GH_TOKEN" }
+
+[tool.semantic_release.branches.main]
+match = "main"
+prerelease = false
