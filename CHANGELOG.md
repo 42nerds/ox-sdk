@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.1.0 (2026-03-03)
+
+### Features
+
+- Add VSCode pytest discovery settings
+  ([`6462fef`](https://github.com/42nerds/ox-sdk/commit/6462feff36582fd6e75475411aa1546059dabe54))
+
+
 ## v1.0.0 (2026-03-03)
 
 ### Features
