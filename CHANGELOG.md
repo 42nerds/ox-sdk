@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.3.0 (2026-03-03)
+
+### Features
+
+- Add OpenAPI spec management workflow
+  ([`96e0abf`](https://github.com/42nerds/ox-sdk/commit/96e0abf14dc94a276cc043b5e00f63d79da80d58))
+
+
 ## v1.2.0 (2026-03-03)
 
 ### Features
