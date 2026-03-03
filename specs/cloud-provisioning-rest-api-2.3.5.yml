@@ -1,0 +1,3958 @@
+openapi: 3.0.1
+info:
+  title: Cloud Provisioning REST API
+  description: |
+    # Cloud Provisioning REST API
+
+    ## Abstract
+
+    The Open-Xchange Cloud Provisioning REST API can be used to provision Contexts and users. It consists of 4 main parts explained below.
+
+    ## Brand management
+
+    These API methods can be used to define a default theming for all created contexts if not overridden on context level.
+    It is also possible to define the contact information shown in the about dialogue.
+
+    ## Context management
+
+    The Context management API can be used to create contexts. Contexts are containers for users.
+
+    ## User management
+
+    The User management API is used to create users within contexts.
+
+    ## Mail domain management
+
+    Use the Mail domain management API to create shared mail domains, catch-all accounts for domains
+    and manage mail forwarding accounts/aliases.
+
+    ## HTTP Headers
+
+    ### X-Trace-Id
+
+    Mirrors the header with the same name if it has been specified in the request, sending back the same value for tracing and debugging purposes.
+
+    ## Error handling
+
+    ### API Version 1
+
+    Error responses comply with <https://github.com/blongden/vnd.error>
+
+    ### API Version 2
+
+    Beginning with generation 2 of Cloud-API, error responses are conforming to <https://jsonapi.org/format/#errors>.
+    The array of errors always only consist of one entry.
+    Each entry contains the following elements:
+
+    - **code:** fixed code for that specific error
+    - **id:** generated, unique id
+    - **status:** HTTP status code
+    - **title:** error message belonging to that error
+
+    #### Example error response
+
+    ```JSON
+    {
+        "errors": [
+            {
+                "code": "8",
+                "id": "92f3ede7-21b1-4fb5-a340-e609dbb90585",
+                "status": "409",
+                "title": "Context \"test1\" already exists"
+            }
+        ]
+    }
+    ```
+    #### List of possible error codes and messages
+
+    | Code | Message                                                                         | HTTP Code                                                           |
+    | ---- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+    | 1    | User not found                                                                  | [404](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404) |
+    | 2    | Authentication failed                                                           | [401](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401) |
+    | 3    | Context \"%s\" not found                                                        | [404](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404) |
+    | 4    | Either name or id parameter must be provided                                    | [409](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/409) |
+    | 5    | Unknown error                                                                   | [400](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400) |
+    | 6    | There's a maintenance ongoing, please try again later                           | [503](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/503) |
+    | 7    | Mandatory parameters missing: %s                                                | [409](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/409) |
+    | 8    | Context \"%s\" already exists                                                   | [409](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/409) |
+    | 9    | Missing one or more context admin parameters: %s                                | [409](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/409) |
+    | 10   | One or more services not available                                              | [503](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/503) |
+    | 11   | Either only unifiedQuota or mail- and fileQuota can be specified                | [409](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/409) |
+    | 12   | Quota must be either omitted or a positive value                                | [409](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/409) |
+    | 13   | Invalid CoS values: %s                                                          | [409](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/409) |
+    | 14   | The mail domain is already in use                                               | [409](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/409) |
+    | 15   | A parameter contains invalid characters \"%s\"                                  | [409](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/409) |
+    | 16   | Setting dark logo requires to provide the light logo as well                    | [409](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/409) |
+    | 17   | Only one of \"%s\" allowed                                                      | [409](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/409) |
+    | 18   | At least one of \"%s\" must be specified                                        | [409](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/409) |
+    | 19   | User to reassign \"%s\" does not exist                                          | [404](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404) |
+    | 20   | Login \"%s\" not found                                                          | [404](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404) |
+    | 21   | Alias \"%s\" not found                                                          | [404](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404) |
+    | 22   | Forward or recipient \"%s\" not found                                           | [404](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404) |
+    | 23   | Forward recipient \"%s\" not found                                              | [404](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404) |
+    | 24   | Invalid mail address: \"%s\"                                                    | [400](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400) |
+    | 25   | Maximum amount of external forward recipients exceeded                          | [409](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/409) |
+    | 26   | Maximum amount of internal forward recipients exceeded                          | [409](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/409) |
+    | 27   | Shared domain \"%s\" not found                                                  | [404](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404) |
+    | 28   | Shared domain \"%s\" already exists                                             | [409](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/409) |
+    | 29   | No such catchall user \"%s\"                                                    | [404](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404) |
+    | 30   | Catchall domain \"%s\" not found assigned to user \"%s\"                        | [404](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404) |
+    | 31   | Catchall domain \"%s\" already exists                                           | [409](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/409) |
+    | 32   | User \"%s\" already exists                                                      | [409](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/409) |
+    | 33   | Mail address \"%s\" already in use                                              | [409](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/409) |
+    | 34   | The display name is already in use                                              | [409](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/409) |
+    | 35   | Invalid timezone                                                                | [400](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400) |
+    | 36   | Invalid spamlevel \"%s\"                                                        | [400](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400) |
+    | 37   | The list of aliases does not include the current mail address                   | [409](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/409) |
+    | 38   | Unable to create more users. The maximum amount of users for this context is %s | [409](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/409) |
+    | 39   | Rate limited, too many requests                                                 | [429](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/429) |
+    | 40   | The shared mail domain is already in use                                        | [409](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/409) |
+    | 41   | Forward \"%s\" already exists                                                   | [409](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/409) |
+    | 42   | Unexpected Email Backup API Error                                               | [500](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500) |
+    | 43   | Alias already exists                                                            | [409](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/409) |
+  version: 2.3.5
+security:
+- BrandAuth: []
+tags:
+- name: Mail domain management API v2
+  description: "This provides functionality for managing mail domains, catchalls,\
+    \ aliases, forwards and shared domains.The spamlevel has to be one of <code>low</code>,\
+    \ <code>medium</code> or <code>high</code>. If not provided, <code>high</code>\
+    \ will be used."
+- name: User management API v2
+  description: |
+    This API provides functionality for managing users.
+
+    The spamlevel has to be one of <code>low</code>, <code>medium</code> or <code>high</code>. If not provided, <code>high</code> will be used.
+    **Note** that some resource settings are optional and in that case will not be returned by the `list`
+    and `get` calls. That applies to all settings that do not have a default and have not
+    been set explicitly.
+- name: Brand management API v2
+  description: |
+    This API contains endpoints for retrieving, changing, and removing brand theming settings, such as colors and
+    contact information.
+
+    **Note** that some resource settings such as theme are optional and in that case will not be returned
+    by the `list` and `get` calls. That applies to all settings that do not have a default and have not
+    been set explicitly.
+- name: Context management API v2
+  description: |
+    This API contains endpoints for retrieving, changing, removing and creating contexts.
+
+    **Note** that some resource settings such as theme are optional and in that case will not be returned
+    by the `list` and `get` calls. That applies to all settings that do not have a default and have not
+    been set explicitly.
+- name: Mail domain management API v1
+  description: "This provides functionality for managing mail domains, \ncatchalls,\
+    \ aliases, forwards and shared domains. ⚠️**Note:** Version 1 of this API is deprecated\
+    \ and will be removed in the future.⚠️"
+- name: User management API v1
+  description: This provides functionality for managing users. ⚠️**Note:** Version
+    1 of this API is deprecated and will be removed in the future.⚠️
+- name: Brand management API v1
+  description: "This contains endpoints for retrieving, changing, and removing \n\
+    brand theming settings, such as colors and contact information. ⚠️**Note:** Version\
+    \ 1 of this API is deprecated and will be removed in the future.⚠️"
+- name: Context management API v1
+  description: "This contains endpoints for retrieving, changing, removing \nand creating\
+    \ contexts. ⚠️**Note:** Version 1 of this API is deprecated and will be removed\
+    \ in the future.⚠️"
+paths:
+  /cloudapi/v1/brand/theme:
+    get:
+      tags:
+      - Brand management API v1
+      summary: Get brand theming
+      operationId: getThemeSettings
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Theme"
+        "401":
+          description: Authentication failed
+      deprecated: true
+    post:
+      tags:
+      - Brand management API v1
+      summary: Change theming of brand
+      description: Change brand related theming such as colors and contact information.
+        Note that a dark logo can only be set in case a light logo is provided as
+        well.
+      externalDocs:
+        url: https://documentation.open-xchange.com/8/ui/theming/dynamic-theming.html
+      operationId: setThemeSettings
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Theme"
+        required: true
+      responses:
+        "401":
+          description: Authentication failed
+        "400":
+          description: Parameter error
+      deprecated: true
+    delete:
+      tags:
+      - Brand management API v1
+      summary: Remove the complete theming of brand
+      description: Remove the complete theming brand related theming such as colors
+        and contact information.
+      externalDocs:
+        url: https://documentation.open-xchange.com/8/ui/theming/dynamic-theming.html
+      operationId: removeThemeSettings
+      responses:
+        "401":
+          description: Authentication failed
+      deprecated: true
+  /cloudapi/v1/contexts:
+    get:
+      tags:
+      - Context management API v1
+      summary: List contexts
+      description: Lists all context matching the specified search pattern. The default
+        pattern is '*'. The pattern is applied to the name of the contexts
+      operationId: list
+      parameters:
+      - name: pattern
+        in: query
+        schema:
+          type: string
+          nullable: true
+          default: '*'
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GetContext v1"
+        "401":
+          description: Authentication failed
+      deprecated: true
+    post:
+      tags:
+      - Context management API v1
+      summary: Create context
+      description: |-
+        Create a context. Returns the created context including its generated id.
+
+        Example of a context creation using <a href="https://httpie.io/cli">httpie</a>:
+
+        <pre><code class="language-shell">http --auth mybrand:secret POST https://provisioning.eu.appsuite.cloud/cloudapi/v1/contexts name=acme</code></pre>
+      operationId: create
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateContext v1"
+        required: true
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetContext v1"
+        "401":
+          description: Authentication failed
+        "409":
+          description: Wrong or missing parameters / Context already exists
+        "400":
+          description: Other errors
+      deprecated: true
+  /cloudapi/v1/contexts/{nameOrId}:
+    get:
+      tags:
+      - Context management API v1
+      summary: Get context data
+      description: Retrieve context data. The path parameter is either the context
+        name or its generated id
+      operationId: get
+      parameters:
+      - name: nameOrId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetContext v1"
+        "401":
+          description: Authentication failed
+        "404":
+          description: Context not found
+      deprecated: true
+    put:
+      tags:
+      - Context management API v1
+      summary: Change Context
+      description: Change context data. The path parameter is either the context name
+        or its generated id
+      operationId: change
+      parameters:
+      - name: nameOrId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangeContext v1"
+        required: true
+      responses:
+        "401":
+          description: Authentication failed
+        "404":
+          description: Context not found
+        "400":
+          description: Other errors
+      deprecated: true
+    delete:
+      tags:
+      - Context management API v1
+      summary: Delete Context
+      description: Delete a context. The path parameter is either the context name
+        or its generated id
+      operationId: delete
+      parameters:
+      - name: nameOrId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "401":
+          description: Authentication failed
+        "404":
+          description: Context not found
+      deprecated: true
+  /cloudapi/v1/mail/alias/{alias}/exists:
+    head:
+      tags:
+      - Mail domain management API v1
+      summary: Check whether given alias exists
+      description: Check whether given mail alias exists.
+      operationId: existsAlias
+      parameters:
+      - name: alias
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Ok
+        "401":
+          description: Authentication failed
+        "404":
+          description: Alias does not exist
+      deprecated: true
+  /cloudapi/v1/mail/catchall:
+    get:
+      tags:
+      - Mail domain management API v1
+      summary: Get all domain catchalls
+      description: Get all domain catchalls. The name or id of the context must be
+        specified using either the <i>name</i> or the <i>id</i> query parameter.
+      operationId: getDomainCatchalls
+      parameters:
+      - name: name
+        in: query
+        schema:
+          type: string
+          nullable: true
+      - name: id
+        in: query
+        schema:
+          type: integer
+          format: int32
+          nullable: true
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DomainCatchall"
+        "401":
+          description: Authentication failed
+        "404":
+          description: Context not found
+        "409":
+          description: Neither Context name nor id specified in query
+      deprecated: true
+    post:
+      tags:
+      - Mail domain management API v1
+      summary: Add domain catchall
+      description: Add domain catchall. The name or id of the context must be specified
+        using either the <i>name</i> or the <i>id</i> query parameter.
+      operationId: createDomainCatchall
+      parameters:
+      - name: name
+        in: query
+        schema:
+          type: string
+          nullable: true
+      - name: id
+        in: query
+        schema:
+          type: integer
+          format: int32
+          nullable: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DomainCatchall"
+        required: true
+      responses:
+        "401":
+          description: Authentication failed
+        "404":
+          description: Context not found
+        "409":
+          description: Neither Context name nor id specified in query
+      deprecated: true
+  /cloudapi/v1/mail/catchall/domain/{domain}/login/{login}:
+    delete:
+      tags:
+      - Mail domain management API v1
+      summary: Remove domain catchall
+      description: Remove domain catchall. The name or id of the context must be specified
+        using either the <i>name</i> or the <i>id</i> query parameter.
+      operationId: removeDomainCatchall
+      parameters:
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: login
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: name
+        in: query
+        schema:
+          type: string
+          nullable: true
+      - name: id
+        in: query
+        schema:
+          type: integer
+          format: int32
+          nullable: true
+      responses:
+        "401":
+          description: Authentication failed
+        "404":
+          description: Context not found
+        "409":
+          description: Neither Context name nor id specified in query
+      deprecated: true
+  /cloudapi/v1/mail/forwards:
+    get:
+      tags:
+      - Mail domain management API v1
+      summary: Get all mail forwards
+      description: Get all mail forwards. The name or id of the context must be specified
+        using either the <i>name</i> or the <i>id</i> query parameter.
+      operationId: getMailForwards
+      parameters:
+      - name: name
+        in: query
+        schema:
+          type: string
+          nullable: true
+      - name: id
+        in: query
+        schema:
+          type: integer
+          format: int32
+          nullable: true
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MailForward"
+        "401":
+          description: Authentication failed
+        "404":
+          description: Context not found
+        "409":
+          description: Neither Context name nor id specified in query
+      deprecated: true
+    post:
+      tags:
+      - Mail domain management API v1
+      summary: Create or replace a forward
+      description: Create or replace a forward with the given address. The name or
+        id of the context must be specified using either the <i>name</i> or the <i>id</i>
+        query parameter.
+      operationId: createMailForward
+      parameters:
+      - name: name
+        in: query
+        schema:
+          type: string
+          nullable: true
+      - name: id
+        in: query
+        schema:
+          type: integer
+          format: int32
+          nullable: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MailForward"
+        required: true
+      responses:
+        "200":
+          description: Ok
+        "401":
+          description: Authentication failed
+        "404":
+          description: Context not found
+        "409":
+          description: Neither Context name nor id specified in query
+      deprecated: true
+    delete:
+      tags:
+      - Mail domain management API v1
+      summary: Delete all forwards in context
+      description: Delete all forwards in context. The name or id of the context must
+        be specified using either the <i>name</i> or the <i>id</i> query parameter.
+      operationId: removeAllMailForwards
+      parameters:
+      - name: name
+        in: query
+        schema:
+          type: string
+          nullable: true
+      - name: id
+        in: query
+        schema:
+          type: integer
+          format: int32
+          nullable: true
+      responses:
+        "200":
+          description: Ok
+        "401":
+          description: Authentication failed
+        "404":
+          description: Context not found
+        "409":
+          description: Neither Context name nor id specified in query
+      deprecated: true
+  /cloudapi/v1/mail/forwards/{address}:
+    get:
+      tags:
+      - Mail domain management API v1
+      summary: Get recipients of forward
+      description: Get recipients of forward. The name or id of the context must be
+        specified using either the <i>name</i> or the <i>id</i> query parameter.
+      operationId: getMailForwardRecipients
+      parameters:
+      - name: address
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: name
+        in: query
+        schema:
+          type: string
+          nullable: true
+      - name: id
+        in: query
+        schema:
+          type: integer
+          format: int32
+          nullable: true
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        "401":
+          description: Authentication failed
+        "404":
+          description: Context or forward not found
+        "409":
+          description: Neither Context name nor id specified in query
+      deprecated: true
+    put:
+      tags:
+      - Mail domain management API v1
+      summary: Add recipients to forward
+      description: Add recipients to forward. The name or id of the context must be
+        specified using either the <i>name</i> or the <i>id</i> query parameter.
+      operationId: addRecipientsToMailForward
+      parameters:
+      - name: address
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: name
+        in: query
+        schema:
+          type: string
+          nullable: true
+      - name: id
+        in: query
+        schema:
+          type: integer
+          format: int32
+          nullable: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              minItems: 1
+              type: array
+              items:
+                type: string
+        required: true
+      responses:
+        "200":
+          description: Ok
+        "401":
+          description: Authentication failed
+        "404":
+          description: Context or forward not found
+        "409":
+          description: Neither Context name nor id specified in query
+      deprecated: true
+    delete:
+      tags:
+      - Mail domain management API v1
+      summary: Delete forward
+      description: Delete forward. The name or id of the context must be specified
+        using either the <i>name</i> or the <i>id</i> query parameter.
+      operationId: removeMailForward
+      parameters:
+      - name: address
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: name
+        in: query
+        schema:
+          type: string
+          nullable: true
+      - name: id
+        in: query
+        schema:
+          type: integer
+          format: int32
+          nullable: true
+      responses:
+        "200":
+          description: Ok
+        "401":
+          description: Authentication failed
+        "404":
+          description: Context or forward not found
+        "409":
+          description: Neither Context name nor id specified in query
+      deprecated: true
+  /cloudapi/v1/mail/forwards/{address}/exists:
+    head:
+      tags:
+      - Mail domain management API v1
+      summary: Does the forward exist in context?
+      description: Does the forward exist in context? The name or id of the context
+        must be specified using either the <i>name</i> or the <i>id</i> query parameter.
+      operationId: existsMailForward
+      parameters:
+      - name: address
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: name
+        in: query
+        schema:
+          type: string
+          nullable: true
+      - name: id
+        in: query
+        schema:
+          type: integer
+          format: int32
+          nullable: true
+      responses:
+        "200":
+          description: Ok
+        "401":
+          description: Authentication failed
+        "404":
+          description: Context or forward not found
+        "409":
+          description: Neither Context name nor id specified in query
+      deprecated: true
+  /cloudapi/v1/mail/forwards/{address}/{recipient}:
+    delete:
+      tags:
+      - Mail domain management API v1
+      summary: Delete recipient from forward
+      description: Delete recipient from forward. The name or id of the context must
+        be specified using either the <i>name</i> or the <i>id</i> query parameter.
+      operationId: removeRecipientFromMailForward
+      parameters:
+      - name: address
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: recipient
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: name
+        in: query
+        schema:
+          type: string
+          nullable: true
+      - name: id
+        in: query
+        schema:
+          type: integer
+          format: int32
+          nullable: true
+      responses:
+        "200":
+          description: Ok
+        "401":
+          description: Authentication failed
+        "404":
+          description: Context or forward not found
+        "409":
+          description: Neither Context name nor id specified in query
+      deprecated: true
+  /cloudapi/v1/mail/forwards/{address}/{recipient}/exists:
+    head:
+      tags:
+      - Mail domain management API v1
+      summary: Does the forward recipient exist in forward of context?
+      description: Does the forward recipient exist in forward of context? The name
+        or id of the context must be specified using either the <i>name</i> or the
+        <i>id</i> query parameter.
+      operationId: existsMailForwardRecipient
+      parameters:
+      - name: address
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: recipient
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: name
+        in: query
+        schema:
+          type: string
+          nullable: true
+      - name: id
+        in: query
+        schema:
+          type: integer
+          format: int32
+          nullable: true
+      responses:
+        "200":
+          description: Ok
+        "401":
+          description: Authentication failed
+        "404":
+          description: Context or forward not found
+        "409":
+          description: Neither Context name nor id specified in query
+      deprecated: true
+  /cloudapi/v1/mail/shareddomains:
+    get:
+      tags:
+      - Mail domain management API v1
+      summary: List shared domains
+      description: List all shared domains which can be used to create mail aliases
+        in different contexts.
+      operationId: listSharedDomains
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        "401":
+          description: Authentication failed
+      deprecated: true
+  /cloudapi/v1/mail/shareddomains/{domain}:
+    post:
+      tags:
+      - Mail domain management API v1
+      summary: Create shared domain
+      description: Create shared domain to be used to create mail aliases in different
+        contexts.
+      operationId: createSharedDomain
+      parameters:
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Ok
+        "401":
+          description: Authentication failed
+        "409":
+          description: Domain already exists
+      deprecated: true
+    delete:
+      tags:
+      - Mail domain management API v1
+      summary: Delete shared domain
+      description: Delete shared domain.
+      operationId: deleteSharedDomain
+      parameters:
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Ok
+        "401":
+          description: Authentication failed
+        "404":
+          description: Domain not found
+      deprecated: true
+    head:
+      tags:
+      - Mail domain management API v1
+      summary: Check whether shared domain exists
+      description: Check whether the given shared domain exists.
+      operationId: existsSharedDomain
+      parameters:
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Ok
+        "401":
+          description: Authentication failed
+        "404":
+          description: Domain not found
+      deprecated: true
+  /cloudapi/v1/users:
+    get:
+      tags:
+      - User management API v1
+      summary: List users
+      description: List users of context. The name or id of the context must be specified
+        using either the <i>name</i> or the <i>id</i> query parameter.
+      operationId: list_1
+      parameters:
+      - name: pattern
+        in: query
+        schema:
+          type: string
+          nullable: true
+          default: '*'
+      - name: includeguests
+        in: query
+        schema:
+          type: boolean
+          nullable: true
+          default: false
+      - name: includeid
+        in: query
+        schema:
+          type: boolean
+          nullable: true
+          default: false
+      - name: includewebloginenabled
+        in: query
+        schema:
+          type: boolean
+          nullable: true
+          default: false
+      - name: includeimage
+        in: query
+        schema:
+          type: boolean
+          nullable: true
+          default: false
+      - name: name
+        in: query
+        schema:
+          type: string
+          nullable: true
+      - name: id
+        in: query
+        schema:
+          type: integer
+          format: int32
+          nullable: true
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ListUser v1"
+        "401":
+          description: Authentication failed
+        "404":
+          description: Context or User not found
+        "409":
+          description: Neither Context name nor id specified in query
+      deprecated: true
+    post:
+      tags:
+      - User management API v1
+      summary: Create user
+      description: |-
+        Create user. The name or id of the context must be specified using either the <i>name</i> or the <i>id</i> query parameter.
+
+        Example of a user creation using <a href="https://httpie.io/cli">httpie</a>:
+
+        <pre><code class="language-shell">http --auth mybrand:secret POST https://provisioning.eu.appsuite.cloud/cloudapi/v1/users?name=acme name="john.doe" password=secret displayName="John Doe" givenName=John surName=Doe mail=john@example.acme unifiedQuota=1000</code></pre>Note that the response of a create does not contain all possible values. E.g. quota usages are not returned an can be assumed to be 0. The value of <tt>webLoginEnabled</tt> can be assumed to be <tt>true</tt>.
+      operationId: create_1
+      parameters:
+      - name: name
+        in: query
+        schema:
+          type: string
+          nullable: true
+      - name: id
+        in: query
+        schema:
+          type: integer
+          format: int32
+          nullable: true
+      - name: includeid
+        in: query
+        schema:
+          type: boolean
+          nullable: true
+          default: false
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUser v1"
+        required: true
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetUser v1"
+        "401":
+          description: Authentication failed
+        "404":
+          description: Context or User not found
+        "409":
+          description: Various other errors
+      deprecated: true
+  /cloudapi/v1/users/count:
+    get:
+      tags:
+      - User management API v1
+      summary: Amount of users
+      description: Returns the amount of users in the given context. The name or id
+        of the context must be specified using either the <i>name</i> or the <i>id</i>
+        query parameter.
+      operationId: count
+      parameters:
+      - name: name
+        in: query
+        schema:
+          type: string
+          nullable: true
+      - name: id
+        in: query
+        schema:
+          type: integer
+          format: int32
+          nullable: true
+      - name: includeguests
+        in: query
+        schema:
+          type: boolean
+          nullable: true
+          default: false
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserCount"
+        "401":
+          description: Authentication failed
+        "404":
+          description: Context not found
+        "409":
+          description: Neither Context name nor id specified in query
+      deprecated: true
+  /cloudapi/v1/users/{login}:
+    get:
+      tags:
+      - User management API v1
+      summary: Get user
+      description: Get user data. The name or id of the context must be specified
+        using either the <i>name</i> or the <i>id</i> query parameter.
+      operationId: get_1
+      parameters:
+      - name: login
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: name
+        in: query
+        schema:
+          type: string
+          nullable: true
+      - name: includeid
+        in: query
+        schema:
+          type: boolean
+          nullable: true
+          default: false
+      - name: includewebloginenabled
+        in: query
+        schema:
+          type: boolean
+          nullable: true
+          default: false
+      - name: includeimage
+        in: query
+        schema:
+          type: boolean
+          nullable: true
+          default: false
+      - name: includepermissions
+        in: query
+        schema:
+          type: boolean
+          nullable: true
+          default: false
+      - name: id
+        in: query
+        schema:
+          type: integer
+          format: int32
+          nullable: true
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetUser v1"
+        "401":
+          description: Authentication failed
+        "404":
+          description: Context or User not found
+        "409":
+          description: Neither Context name nor id specified in query
+      deprecated: true
+    put:
+      tags:
+      - User management API v1
+      summary: Change user
+      description: Change user. The name or id of the context must be specified using
+        either the <i>name</i> or the <i>id</i> query parameter.
+      operationId: change_1
+      parameters:
+      - name: name
+        in: query
+        schema:
+          type: string
+          nullable: true
+      - name: id
+        in: query
+        schema:
+          type: integer
+          format: int32
+          nullable: true
+      - name: login
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangeUser v1"
+        required: true
+      responses:
+        "401":
+          description: Authentication failed
+        "404":
+          description: Context or User not found
+        "409":
+          description: Various other errors
+      deprecated: true
+    delete:
+      tags:
+      - User management API v1
+      summary: Delete user
+      description: "Delete user. In order to delete a guest user, use its numerical\
+        \ guest id as login. Optionally set the reassignuser parameter to an existing\
+        \ user to assign shared appointment, drive or contact data to it. For cases\
+        \ where shared data is to be assigned to the context admin, the placeholder\
+        \ <code>%CONTEXTADMIN%</code> can be used instead of having to specify the\
+        \ context admin's login or id. The name or id of the context must be specified\
+        \ using either the <i>name</i> or the <i>id</i> query parameter."
+      operationId: delete_1
+      parameters:
+      - name: name
+        in: query
+        schema:
+          type: string
+          nullable: true
+      - name: id
+        in: query
+        schema:
+          type: integer
+          format: int32
+          nullable: true
+      - name: login
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: reassignuser
+        in: query
+        schema:
+          type: string
+          nullable: true
+      responses:
+        "401":
+          description: Authentication failed
+        "404":
+          description: Context or User not found
+        "409":
+          description: Neither Context name nor id specified in query
+      deprecated: true
+  /cloudapi/v1/users/{login}/exists:
+    head:
+      tags:
+      - User management API v1
+      summary: Check whether given user login exists
+      description: Check whether given user login exists.
+      operationId: existsLogin
+      parameters:
+      - name: login
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Ok
+        "401":
+          description: Authentication failed
+        "404":
+          description: Login not found
+      deprecated: true
+  /cloudapi/v1/users/{login}/permissions:
+    get:
+      tags:
+      - User management API v1
+      summary: Get user permissions
+      description: Get user permissions. The name or id of the context must be specified
+        using either the <i>name</i> or the <i>id</i> query parameter.
+      operationId: getUserPermissions
+      parameters:
+      - name: login
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: name
+        in: query
+        schema:
+          type: string
+          nullable: true
+      - name: id
+        in: query
+        schema:
+          type: integer
+          format: int32
+          nullable: true
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Permissions"
+        "401":
+          description: Authentication failed
+        "404":
+          description: Context or User not found
+        "409":
+          description: Neither Context name nor id specified in query
+      deprecated: true
+    put:
+      tags:
+      - User management API v1
+      summary: Change user permissions
+      description: Change user permissions. The name or id of the context must be
+        specified using either the <i>name</i> or the <i>id</i> query parameter.
+      operationId: setUserPermissions
+      parameters:
+      - name: login
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: name
+        in: query
+        schema:
+          type: string
+          nullable: true
+      - name: id
+        in: query
+        schema:
+          type: integer
+          format: int32
+          nullable: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Permissions"
+        required: true
+      responses:
+        "401":
+          description: Authentication failed
+        "404":
+          description: Context or User not found
+        "409":
+          description: Neither Context name nor id specified in query
+      deprecated: true
+  /cloudapi/v2/brand/theme:
+    get:
+      tags:
+      - Brand management API v2
+      summary: Get brand theming
+      operationId: getThemeSettings_1
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Theme"
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+    post:
+      tags:
+      - Brand management API v2
+      summary: Change theming of brand
+      description: Change brand related theming such as colors and contact information.
+        Note that a dark logo can only be set in case a light logo is provided as
+        well.
+      externalDocs:
+        url: https://documentation.open-xchange.com/8/ui/theming/dynamic-theming.html
+      operationId: setThemeSettings_1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Theme"
+        required: true
+      responses:
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "400":
+          description: Parameter error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+    delete:
+      tags:
+      - Brand management API v2
+      summary: Remove the complete theming of brand
+      description: Remove the complete theming brand related theming such as colors
+        and contact information
+      externalDocs:
+        url: https://documentation.open-xchange.com/8/ui/theming/dynamic-theming.html
+      operationId: removeThemeSettings_1
+      responses:
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+  /cloudapi/v2/contexts:
+    get:
+      tags:
+      - Context management API v2
+      summary: List contexts
+      description: |
+        Lists all contexts matching the specified search pattern. The default pattern is '*'.
+        The pattern is applied to the name of the contexts.
+
+        **Note** that not all resource settings are contained in the response. E.g. the `brandName` and
+        `toplevelBrandName` settings can only be retrieved using a `get` request of a single context using
+        the related boolean `includebrand` query parameter.
+      operationId: list_2
+      parameters:
+      - name: pattern
+        in: query
+        schema:
+          type: string
+          nullable: true
+          default: '*'
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GetContext v2"
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+    post:
+      tags:
+      - Context management API v2
+      summary: Create context
+      description: |-
+        Create a context. Returns the created context.
+
+        Example of a context creation using <a href="https://httpie.io/cli">httpie</a>:
+
+        <pre><code class="language-shell">http --auth mybrand:secret POST https://provisioning.eu.appsuite.cloud/cloudapi/v2/contexts name=acme</code></pre>
+      operationId: create_2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateContext v2"
+        required: true
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetContext v2"
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "409":
+          description: Wrong or missing parameters / Context already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "400":
+          description: Other errors
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+  /cloudapi/v2/contexts/{nameOrId}:
+    get:
+      tags:
+      - Context management API v2
+      summary: Get context data
+      description: Retrieve context data. The path parameter is the context name.
+      operationId: get_2
+      parameters:
+      - name: nameOrId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: includebrand
+        in: query
+        schema:
+          type: boolean
+          nullable: true
+          default: false
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetContext v2"
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "404":
+          description: Context not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+    put:
+      tags:
+      - Context management API v2
+      summary: Change Context
+      description: |
+        Change context data. The path parameter is the context name.
+
+        In order to remove the complete theming, provide an empty JSON map.
+
+        In order to remove a specific theme setting, set its value to `null`.
+      operationId: change_2
+      parameters:
+      - name: nameOrId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangeContext v2"
+        required: true
+      responses:
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "404":
+          description: Context not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "400":
+          description: Other errors
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+    delete:
+      tags:
+      - Context management API v2
+      summary: Delete Context
+      description: Delete a context. The path parameter is the context name.
+      operationId: delete_2
+      parameters:
+      - name: nameOrId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "404":
+          description: Context not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+  /cloudapi/v2/mail/alias/{alias}/exists:
+    head:
+      tags:
+      - Mail domain management API v2
+      summary: Check whether given alias exists
+      description: Check whether given mail alias exists.
+      operationId: existsAlias_1
+      parameters:
+      - name: alias
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Ok
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "404":
+          description: Alias does not exist
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+  /cloudapi/v2/mail/catchall:
+    get:
+      tags:
+      - Mail domain management API v2
+      summary: Get all domain catchalls
+      description: Get all domain catchalls. The name or id of the context must be
+        specified using either the <i>name</i> or the <i>id</i> query parameter.
+      operationId: getDomainCatchalls_1
+      parameters:
+      - name: name
+        in: query
+        schema:
+          type: string
+          nullable: true
+      - name: id
+        in: query
+        schema:
+          type: integer
+          format: int32
+          nullable: true
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DomainCatchall"
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "404":
+          description: Context not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "409":
+          description: Neither Context name nor id specified in query
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+    post:
+      tags:
+      - Mail domain management API v2
+      summary: Add domain catchall
+      description: Add domain catchall. The name or id of the context must be specified
+        using either the <i>name</i> or the <i>id</i> query parameter.
+      operationId: createDomainCatchall_1
+      parameters:
+      - name: name
+        in: query
+        schema:
+          type: string
+          nullable: true
+      - name: id
+        in: query
+        schema:
+          type: integer
+          format: int32
+          nullable: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DomainCatchall"
+        required: true
+      responses:
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "404":
+          description: Context not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "409":
+          description: Neither Context name nor id specified in query
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+  /cloudapi/v2/mail/catchall/domain/{domain}/login/{login}:
+    delete:
+      tags:
+      - Mail domain management API v2
+      summary: Remove domain catchall
+      description: Remove domain catchall. The name or id of the context must be specified
+        using either the <i>name</i> or the <i>id</i> query parameter.
+      operationId: removeDomainCatchall_1
+      parameters:
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: login
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: name
+        in: query
+        schema:
+          type: string
+          nullable: true
+      - name: id
+        in: query
+        schema:
+          type: integer
+          format: int32
+          nullable: true
+      responses:
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "404":
+          description: Context not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "409":
+          description: Neither Context name nor id specified in query
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+  /cloudapi/v2/mail/forwards:
+    get:
+      tags:
+      - Mail domain management API v2
+      summary: Get all mail forwards
+      description: Get all mail forwards. The name or id of the context must be specified
+        using either the <i>name</i> or the <i>id</i> query parameter.
+      operationId: getMailForwards_1
+      parameters:
+      - name: name
+        in: query
+        schema:
+          type: string
+          nullable: true
+      - name: id
+        in: query
+        schema:
+          type: integer
+          format: int32
+          nullable: true
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MailForward"
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "404":
+          description: Context not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "409":
+          description: Neither Context name nor id specified in query
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+    post:
+      tags:
+      - Mail domain management API v2
+      summary: Create a forward
+      description: Create a forward with the given address. The name or id of the
+        context must be specified using either the <i>name</i> or the <i>id</i> query
+        parameter.
+      operationId: createMailForward_1
+      parameters:
+      - name: name
+        in: query
+        schema:
+          type: string
+          nullable: true
+      - name: id
+        in: query
+        schema:
+          type: integer
+          format: int32
+          nullable: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MailForward"
+        required: true
+      responses:
+        "200":
+          description: Ok
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "404":
+          description: Context not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "409":
+          description: Neither Context name nor id specified in query
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+    delete:
+      tags:
+      - Mail domain management API v2
+      summary: Delete all forwards in context
+      description: Delete all forwards in context. The name or id of the context must
+        be specified using either the <i>name</i> or the <i>id</i> query parameter.
+      operationId: removeAllMailForwards_1
+      parameters:
+      - name: name
+        in: query
+        schema:
+          type: string
+          nullable: true
+      - name: id
+        in: query
+        schema:
+          type: integer
+          format: int32
+          nullable: true
+      responses:
+        "200":
+          description: Ok
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "404":
+          description: Context not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "409":
+          description: Neither Context name nor id specified in query
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+  /cloudapi/v2/mail/forwards/{address}:
+    get:
+      tags:
+      - Mail domain management API v2
+      summary: Get recipients of forward
+      description: Get recipients of forward. The name or id of the context must be
+        specified using either the <i>name</i> or the <i>id</i> query parameter.
+      operationId: getMailForwardRecipientsDeprecated
+      parameters:
+      - name: address
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: name
+        in: query
+        schema:
+          type: string
+          nullable: true
+      - name: id
+        in: query
+        schema:
+          type: integer
+          format: int32
+          nullable: true
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "404":
+          description: Context or forward not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "409":
+          description: Neither Context name nor id specified in query
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+      deprecated: true
+    put:
+      tags:
+      - Mail domain management API v2
+      summary: Add recipients to forward
+      description: Add recipients to forward. The name or id of the context must be
+        specified using either the <i>name</i> or the <i>id</i> query parameter.
+      operationId: addRecipientsToMailForwardDeprecated
+      parameters:
+      - name: address
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: name
+        in: query
+        schema:
+          type: string
+          nullable: true
+      - name: id
+        in: query
+        schema:
+          type: integer
+          format: int32
+          nullable: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              minItems: 1
+              type: array
+              items:
+                type: string
+        required: true
+      responses:
+        "200":
+          description: Ok
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "404":
+          description: Context or forward not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "409":
+          description: Neither Context name nor id specified in query
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+      deprecated: true
+    delete:
+      tags:
+      - Mail domain management API v2
+      summary: Delete forward
+      description: Delete forward. The name or id of the context must be specified
+        using either the <i>name</i> or the <i>id</i> query parameter.
+      operationId: removeMailForward_1
+      parameters:
+      - name: address
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: name
+        in: query
+        schema:
+          type: string
+          nullable: true
+      - name: id
+        in: query
+        schema:
+          type: integer
+          format: int32
+          nullable: true
+      responses:
+        "200":
+          description: Ok
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "404":
+          description: Context or forward not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "409":
+          description: Neither Context name nor id specified in query
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+  /cloudapi/v2/mail/forwards/{address}/exists:
+    head:
+      tags:
+      - Mail domain management API v2
+      summary: Does the forward exist in context?
+      description: Does the forward exist in context? The name or id of the context
+        must be specified using either the <i>name</i> or the <i>id</i> query parameter.
+      operationId: existsMailForward_1
+      parameters:
+      - name: address
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: name
+        in: query
+        schema:
+          type: string
+          nullable: true
+      - name: id
+        in: query
+        schema:
+          type: integer
+          format: int32
+          nullable: true
+      responses:
+        "200":
+          description: Ok
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "404":
+          description: Context or forward not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "409":
+          description: Neither Context name nor id specified in query
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+  /cloudapi/v2/mail/forwards/{address}/recipients:
+    get:
+      tags:
+      - Mail domain management API v2
+      summary: Get recipients of forward
+      description: Get recipients of forward. The name or id of the context must be
+        specified using either the <i>name</i> or the <i>id</i> query parameter.
+      operationId: getMailForwardRecipients_1
+      parameters:
+      - name: address
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: name
+        in: query
+        schema:
+          type: string
+          nullable: true
+      - name: id
+        in: query
+        schema:
+          type: integer
+          format: int32
+          nullable: true
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "404":
+          description: Context or forward not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "409":
+          description: Neither Context name nor id specified in query
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+    put:
+      tags:
+      - Mail domain management API v2
+      summary: Add recipients to forward
+      description: Add recipients to forward. The name or id of the context must be
+        specified using either the <i>name</i> or the <i>id</i> query parameter.
+      operationId: addRecipientsToMailForward_1
+      parameters:
+      - name: address
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: name
+        in: query
+        schema:
+          type: string
+          nullable: true
+      - name: id
+        in: query
+        schema:
+          type: integer
+          format: int32
+          nullable: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              minItems: 1
+              type: array
+              items:
+                type: string
+        required: true
+      responses:
+        "200":
+          description: Ok
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "404":
+          description: Context or forward not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "409":
+          description: Neither Context name nor id specified in query
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+  /cloudapi/v2/mail/forwards/{address}/spamlevel:
+    get:
+      tags:
+      - Mail domain management API v2
+      summary: Get spamlevel of forward
+      description: Get spamlevel of forward. The name or id of the context must be
+        specified using either the <i>name</i> or the <i>id</i> query parameter.
+      operationId: getMailForwardSpamlevel
+      parameters:
+      - name: address
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: name
+        in: query
+        schema:
+          type: string
+          nullable: true
+      - name: id
+        in: query
+        schema:
+          type: integer
+          format: int32
+          nullable: true
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Spamlevel"
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "404":
+          description: Context or forward not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "409":
+          description: Neither Context name nor id specified in query
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+  /cloudapi/v2/mail/forwards/{address}/spamlevel/{spamlevel}:
+    put:
+      tags:
+      - Mail domain management API v2
+      summary: Update spamlevel of given address
+      description: Update spamlevel of given address. The name or id of the context
+        must be specified using either the <i>name</i> or the <i>id</i> query parameter.
+      operationId: updateMailForwardSpamlevel
+      parameters:
+      - name: address
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: name
+        in: query
+        schema:
+          type: string
+          nullable: true
+      - name: id
+        in: query
+        schema:
+          type: integer
+          format: int32
+          nullable: true
+      - name: spamlevel
+        in: path
+        required: true
+        schema:
+          minLength: 1
+          type: string
+      responses:
+        "200":
+          description: Ok
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "404":
+          description: Context or forward not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "409":
+          description: Neither Context name nor id specified in query
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+  /cloudapi/v2/mail/forwards/{address}/{recipient}:
+    delete:
+      tags:
+      - Mail domain management API v2
+      summary: Delete recipient from forward
+      description: Delete recipient from forward. The name or id of the context must
+        be specified using either the <i>name</i> or the <i>id</i> query parameter.
+      operationId: removeRecipientFromMailForward_1
+      parameters:
+      - name: address
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: recipient
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: name
+        in: query
+        schema:
+          type: string
+          nullable: true
+      - name: id
+        in: query
+        schema:
+          type: integer
+          format: int32
+          nullable: true
+      responses:
+        "200":
+          description: Ok
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "404":
+          description: Context or forward not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "409":
+          description: Neither Context name nor id specified in query
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+  /cloudapi/v2/mail/forwards/{address}/{recipient}/exists:
+    head:
+      tags:
+      - Mail domain management API v2
+      summary: Does the forward recipient exist in forward of context?
+      description: Does the forward recipient exist in forward of context? The name
+        or id of the context must be specified using either the <i>name</i> or the
+        <i>id</i> query parameter.
+      operationId: existsMailForwardRecipient_1
+      parameters:
+      - name: address
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: recipient
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: name
+        in: query
+        schema:
+          type: string
+          nullable: true
+      - name: id
+        in: query
+        schema:
+          type: integer
+          format: int32
+          nullable: true
+      responses:
+        "200":
+          description: Ok
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "404":
+          description: Context not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "409":
+          description: Neither Context name nor id specified in query
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+  /cloudapi/v2/mail/shareddomains:
+    get:
+      tags:
+      - Mail domain management API v2
+      summary: List shared domains
+      description: List all shared domains which can be used to create mail aliases
+        in different contexts.
+      operationId: listSharedDomains_1
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+  /cloudapi/v2/mail/shareddomains/{domain}:
+    post:
+      tags:
+      - Mail domain management API v2
+      summary: Create shared domain
+      description: Create shared domain to be used to create mail aliases in different
+        contexts.
+      operationId: createSharedDomain_1
+      parameters:
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Ok
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "409":
+          description: Domain already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+    delete:
+      tags:
+      - Mail domain management API v2
+      summary: Delete shared domain
+      description: Delete shared domain.
+      operationId: deleteSharedDomain_1
+      parameters:
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Ok
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "404":
+          description: Domain not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+    head:
+      tags:
+      - Mail domain management API v2
+      summary: Check whether shared domain exists
+      description: Check whether the given shared domain exists.
+      operationId: existsSharedDomain_1
+      parameters:
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Ok
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "404":
+          description: Domain not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+  /cloudapi/v2/users:
+    get:
+      tags:
+      - User management API v2
+      summary: List users
+      description: List users of context. The name of the context must be specified
+        using the <i>name</i> query parameter.
+      operationId: list_3
+      parameters:
+      - name: pattern
+        in: query
+        schema:
+          type: string
+          nullable: true
+          default: '*'
+      - name: includeguests
+        in: query
+        schema:
+          type: boolean
+          nullable: true
+          default: false
+      - name: includeid
+        in: query
+        schema:
+          type: boolean
+          nullable: true
+          default: false
+      - name: includewebloginenabled
+        in: query
+        schema:
+          type: boolean
+          nullable: true
+          default: false
+      - name: includeimage
+        in: query
+        schema:
+          type: boolean
+          nullable: true
+          default: false
+      - name: includeuseradminenabled
+        in: query
+        schema:
+          type: boolean
+          nullable: true
+          default: false
+      - name: name
+        in: query
+        schema:
+          type: string
+          nullable: true
+      - name: id
+        in: query
+        schema:
+          type: integer
+          format: int32
+          nullable: true
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ListUser v2"
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "404":
+          description: Context or User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "409":
+          description: Neither Context name nor id specified in query
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+    post:
+      tags:
+      - User management API v2
+      summary: Create user
+      description: |-
+        Create user. The name of the context must be specified using the <i>name</i> query parameter.
+
+        Example of a user creation using <a href="https://httpie.io/cli">httpie</a>:
+
+        <pre><code class="language-shell">http --auth mybrand:secret POST https://provisioning.eu.appsuite.cloud/cloudapi/v2/users?name=acme name="john.doe" password=secret displayName="John Doe" givenName=John surName=Doe mail=john@example.acme unifiedQuota=1000</code></pre>Note that the response of a create does not contain all possible values. E.g. quota usages are not returned an can be assumed to be 0. The value of <tt>webLoginEnabled</tt> can be assumed to be <tt>true</tt>.
+      operationId: create_3
+      parameters:
+      - name: name
+        in: query
+        schema:
+          type: string
+          nullable: true
+      - name: id
+        in: query
+        schema:
+          type: integer
+          format: int32
+          nullable: true
+      - name: includeid
+        in: query
+        schema:
+          type: boolean
+          nullable: true
+          default: false
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUser v2"
+        required: true
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetUser v2"
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "404":
+          description: Context or User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "409":
+          description: Various other errors
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+  /cloudapi/v2/users/count:
+    get:
+      tags:
+      - User management API v2
+      summary: Amount of users
+      description: Returns the amount of users in the given context. The name of the
+        context must be specified using the <i>name</i> query parameter.
+      operationId: count_1
+      parameters:
+      - name: name
+        in: query
+        schema:
+          type: string
+          nullable: true
+      - name: id
+        in: query
+        schema:
+          type: integer
+          format: int32
+          nullable: true
+      - name: includeguests
+        in: query
+        schema:
+          type: boolean
+          nullable: true
+          default: false
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserCount"
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "404":
+          description: Context not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "409":
+          description: Neither Context name nor id specified in query
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+  /cloudapi/v2/users/{login}:
+    get:
+      tags:
+      - User management API v2
+      summary: Get user
+      description: Get user data. The name of the context must be specified using
+        the <i>name</i> query parameter.
+      operationId: get_3
+      parameters:
+      - name: login
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: name
+        in: query
+        schema:
+          type: string
+          nullable: true
+      - name: includeid
+        in: query
+        schema:
+          type: boolean
+          nullable: true
+          default: false
+      - name: includewebloginenabled
+        in: query
+        schema:
+          type: boolean
+          nullable: true
+          default: false
+      - name: includeimage
+        in: query
+        schema:
+          type: boolean
+          nullable: true
+          default: false
+      - name: includepermissions
+        in: query
+        schema:
+          type: boolean
+          nullable: true
+          default: false
+      - name: includeuseradminenabled
+        in: query
+        schema:
+          type: boolean
+          nullable: true
+          default: false
+      - name: id
+        in: query
+        schema:
+          type: integer
+          format: int32
+          nullable: true
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetUser v2"
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "404":
+          description: Context or User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "409":
+          description: Neither Context name nor id specified in query
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+    put:
+      tags:
+      - User management API v2
+      summary: Change user
+      description: Change user. The name of the context must be specified using the
+        <i>name</i> query parameter.
+      operationId: change_3
+      parameters:
+      - name: name
+        in: query
+        schema:
+          type: string
+          nullable: true
+      - name: id
+        in: query
+        schema:
+          type: integer
+          format: int32
+          nullable: true
+      - name: login
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangeUser v2"
+        required: true
+      responses:
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "404":
+          description: Context not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "409":
+          description: Various other errors
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+    delete:
+      tags:
+      - User management API v2
+      summary: Delete user
+      description: "Delete user. In order to delete a guest user, use its numerical\
+        \ guest id as login. Optionally set the reassignuser parameter to an existing\
+        \ user to assign shared appointment, drive or contact data to it. For cases\
+        \ where shared data is to be assigned to the context admin, the placeholder\
+        \ <code>%CONTEXTADMIN%</code> can be used instead of having to specify the\
+        \ context admin's login or id. The name of the context must be specified using\
+        \ the <i>name</i> query parameter."
+      operationId: delete_3
+      parameters:
+      - name: name
+        in: query
+        schema:
+          type: string
+          nullable: true
+      - name: id
+        in: query
+        schema:
+          type: integer
+          format: int32
+          nullable: true
+      - name: login
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: reassignuser
+        in: query
+        schema:
+          type: string
+          nullable: true
+      responses:
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "404":
+          description: Context not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "409":
+          description: Neither Context name nor id specified in query
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+  /cloudapi/v2/users/{login}/exists:
+    head:
+      tags:
+      - User management API v2
+      summary: Check whether given user login exists
+      description: Check whether given user login exists.
+      operationId: existsLogin_1
+      parameters:
+      - name: login
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Ok
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "404":
+          description: Login not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+  /cloudapi/v2/users/{login}/permissions:
+    get:
+      tags:
+      - User management API v2
+      summary: Get user permissions
+      description: Get user permissions. The name of the context must be specified
+        using the <i>name</i> query parameter.
+      operationId: getUserPermissions_1
+      parameters:
+      - name: login
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: name
+        in: query
+        schema:
+          type: string
+          nullable: true
+      - name: id
+        in: query
+        schema:
+          type: integer
+          format: int32
+          nullable: true
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Permissions"
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "404":
+          description: Context not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "409":
+          description: Neither Context name nor id specified in query
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+    put:
+      tags:
+      - User management API v2
+      summary: Change user permissions
+      description: Change user permissions. The name of the context must be specified
+        using the <i>name</i> query parameter.
+      operationId: setUserPermissions_1
+      parameters:
+      - name: login
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: name
+        in: query
+        schema:
+          type: string
+          nullable: true
+      - name: id
+        in: query
+        schema:
+          type: integer
+          format: int32
+          nullable: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Permissions"
+        required: true
+      responses:
+        "401":
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "404":
+          description: Context not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+        "409":
+          description: Neither Context name nor id specified in query
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudApiErrors"
+components:
+  schemas:
+    ChangeContext v1:
+      type: object
+      properties:
+        maxQuota:
+          type: integer
+          description: "optional, default used or kept if not specified"
+          format: int64
+          nullable: true
+          example: 1000
+        theme:
+          description: "optional, default used or kept if not specified"
+          nullable: true
+          allOf:
+          - $ref: "#/components/schemas/Theme"
+      description: Context data needed to change contexts
+    ChangeContext v2:
+      type: object
+      properties:
+        maxQuota:
+          type: integer
+          description: "optional, default used or kept if not specified"
+          format: int64
+          nullable: true
+          example: 1000
+        theme:
+          description: "optional, default used or kept if not specified"
+          nullable: true
+          allOf:
+          - $ref: "#/components/schemas/Theme"
+        maxUser:
+          type: integer
+          description: "optional, if specified, creating users is restricted to this\
+            \ value. The context admin does not count as user so that each context\
+            \ has always one user more than specified."
+          format: int32
+          nullable: true
+          example: 2
+      description: Context data needed to change contexts
+    ChangeUser v1:
+      type: object
+      properties:
+        password:
+          type: string
+          description: "optional, default used or kept if not specified"
+          nullable: true
+        newName:
+          type: string
+          description: "optional, default used or kept if not specified"
+          nullable: true
+          example: jane.doe
+        givenName:
+          type: string
+          description: "optional, default used or kept if not specified"
+          nullable: true
+          example: Jane
+        surName:
+          type: string
+          description: "optional, default used or kept if not specified"
+          nullable: true
+          example: Doe
+        displayName:
+          type: string
+          description: "optional, default used or kept if not specified"
+          nullable: true
+          example: Jane Doe
+        mail:
+          type: string
+          description: "optional, default used or kept if not specified"
+          nullable: true
+          example: jane@example.com
+        classOfService:
+          type: array
+          description: "optional, default used or kept if not specified"
+          nullable: true
+          example:
+          - cloud_pim
+          - cloud_nine
+          items:
+            type: string
+        unifiedQuota:
+          type: integer
+          description: "optional quota in MB; if used, mailQuota or fileQuota can\
+            \ not be specified"
+          format: int64
+          nullable: true
+          example: 1000
+        mailQuota:
+          type: integer
+          description: "optional quota in MB; if used, unifiedQuota can not be specified"
+          format: int64
+          nullable: true
+          example: 1000
+        fileQuota:
+          type: integer
+          description: "optional quota in MB; if used, unifiedQuota can not be specified"
+          format: int64
+          nullable: true
+          example: 1000
+        language:
+          type: string
+          description: "optional locale like en_US, de_DE, etc; default used or kept\
+            \ if not specified"
+          nullable: true
+          example: de_DE
+        aliases:
+          type: array
+          description: "optional, default used or kept if not specified"
+          nullable: true
+          example:
+          - alias1@example.com
+          - alias2@example.com
+          items:
+            type: string
+        timezone:
+          type: string
+          description: "optional, default used or kept if not specified"
+          nullable: true
+          example: Europe/Berlin
+        spamLevel:
+          type: string
+          description: "Optional spam level. If not specified, a system default will\
+            \ be used"
+          nullable: true
+        userImage:
+          description: "optional, user image"
+          nullable: true
+          allOf:
+          - $ref: "#/components/schemas/UserImage"
+        userPermissions:
+          description: "optional, user permissions"
+          nullable: true
+          allOf:
+          - $ref: "#/components/schemas/Permissions"
+      description: Change user data
+    ChangeUser v2:
+      type: object
+      properties:
+        password:
+          type: string
+          description: "optional, default used or kept if not specified"
+          nullable: true
+        newName:
+          type: string
+          description: "optional, default used or kept if not specified"
+          nullable: true
+          example: jane.doe
+        givenName:
+          type: string
+          description: "optional, default used or kept if not specified"
+          nullable: true
+          example: Jane
+        surName:
+          type: string
+          description: "optional, default used or kept if not specified"
+          nullable: true
+          example: Doe
+        displayName:
+          type: string
+          description: "optional, default used or kept if not specified"
+          nullable: true
+          example: Jane Doe
+        mail:
+          type: string
+          description: "optional, default used or kept if not specified"
+          nullable: true
+          example: jane@example.com
+        classOfService:
+          type: array
+          description: "optional, default used or kept if not specified"
+          nullable: true
+          example:
+          - cloud_pim
+          - cloud_nine
+          items:
+            type: string
+        unifiedQuota:
+          type: integer
+          description: "optional quota in MB; if used, mailQuota or fileQuota can\
+            \ not be specified"
+          format: int64
+          nullable: true
+          example: 1000
+        mailQuota:
+          type: integer
+          description: "optional quota in MB; if used, unifiedQuota can not be specified"
+          format: int64
+          nullable: true
+          example: 1000
+        fileQuota:
+          type: integer
+          description: "optional quota in MB; if used, unifiedQuota can not be specified"
+          format: int64
+          nullable: true
+          example: 1000
+        language:
+          type: string
+          description: "optional locale like en_US, de_DE, etc; default used or kept\
+            \ if not specified"
+          nullable: true
+          example: de_DE
+        aliases:
+          type: array
+          description: "optional, default used or kept if not specified"
+          nullable: true
+          example:
+          - alias1@example.com
+          - alias2@example.com
+          items:
+            type: string
+        timezone:
+          type: string
+          description: "optional, default used or kept if not specified"
+          nullable: true
+          example: Europe/Berlin
+        spamLevel:
+          type: string
+          description: "Optional, The spamlevel has to be one of <code>low</code>,\
+            \ <code>medium</code> or <code>high</code>. If not provided, <code>high</code>\
+            \ will be used."
+          nullable: true
+        userImage:
+          description: "optional, user image"
+          nullable: true
+          allOf:
+          - $ref: "#/components/schemas/UserImage"
+        userPermissions:
+          description: "optional, user permissions"
+          nullable: true
+          allOf:
+          - $ref: "#/components/schemas/Permissions"
+        userAdminEnabled:
+          type: boolean
+          description: "optional, set or change user admin role"
+          nullable: true
+        emailBackupEnabled:
+          type: boolean
+          description: "optional, email backup enabled"
+          nullable: true
+      description: Change user data
+    CloudApiError:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Unique code belonging to that specific error
+        status:
+          type: string
+          description: Http status code as string
+        title:
+          type: string
+          description: Textual representation of the error
+        id:
+          type: string
+          description: Unique id for this specific error response
+      description: CloudApiError
+    CloudApiErrors:
+      required:
+      - errors
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: "#/components/schemas/CloudApiError"
+      description: CloudApiErrors
+    CreateContext v1:
+      required:
+      - name
+      type: object
+      properties:
+        name:
+          type: string
+          description: mandatory
+          example: contextName
+        maxQuota:
+          type: integer
+          description: "optional, unlimited if not specified"
+          format: int64
+          nullable: true
+          example: 1000
+        adminPassword:
+          type: string
+          description: "optional, generated if not specified"
+          nullable: true
+        adminLogin:
+          type: string
+          description: "optional, generated if not specified"
+          nullable: true
+        adminEmail:
+          type: string
+          description: "optional, generated if not specified"
+          nullable: true
+          example: adminEmail@example.com
+        theme:
+          description: "optional, default used if not specified"
+          nullable: true
+          allOf:
+          - $ref: "#/components/schemas/Theme"
+      description: Context data needed to create contexts
+    CreateContext v2:
+      required:
+      - name
+      type: object
+      properties:
+        name:
+          type: string
+          description: mandatory
+          example: contextName
+        maxQuota:
+          type: integer
+          description: "optional, unlimited if not specified"
+          format: int64
+          nullable: true
+          example: 1000
+        adminPassword:
+          type: string
+          description: "optional, generated if not specified"
+          nullable: true
+        adminLogin:
+          type: string
+          description: "optional, generated if not specified"
+          nullable: true
+        adminEmail:
+          type: string
+          description: "optional, generated if not specified"
+          nullable: true
+          example: adminEmail@example.com
+        theme:
+          description: "optional, default used if not specified"
+          nullable: true
+          allOf:
+          - $ref: "#/components/schemas/Theme"
+        maxUser:
+          type: integer
+          description: "optional, if specified, creating users is restricted to this\
+            \ value. The context admin does not count as user so that each context\
+            \ has always one user more than specified."
+          format: int32
+          nullable: true
+          example: 2
+      description: Context data needed to create contexts
+    CreateUser v1:
+      required:
+      - givenName
+      - mail
+      - name
+      - password
+      - surName
+      type: object
+      properties:
+        name:
+          type: string
+          description: mandatory
+          example: john.doe
+        password:
+          type: string
+          description: mandatory
+        givenName:
+          type: string
+          description: mandatory
+          example: John
+        surName:
+          type: string
+          description: mandatory
+          example: Surname
+        mail:
+          type: string
+          description: mandatory
+          example: john@example.com
+        displayName:
+          type: string
+          description: "optional, will be automatically set depending on givenName\
+            \ and surName if not specified"
+          nullable: true
+          example: John Doe
+        classOfService:
+          type: array
+          description: "optional, default will be used if not specified"
+          nullable: true
+          example:
+          - cloud_pim
+          - cloud_nine
+          items:
+            type: string
+        language:
+          type: string
+          description: "optional locale like en_US, de_DE, etc; default will be used\
+            \ if not specified"
+          nullable: true
+          example: de_DE
+        aliases:
+          type: array
+          description: "optional, defaults to mandatory mail address"
+          nullable: true
+          example:
+          - alias1@example.com
+          - alias2@example.com
+          items:
+            type: string
+        timezone:
+          type: string
+          description: "optional, default will be used if not specified"
+          nullable: true
+          example: Europe/Berlin
+        spamLevel:
+          type: string
+          description: "Optional spam level. If not specified, a system default will\
+            \ be used"
+          nullable: true
+        unifiedQuota:
+          type: integer
+          description: "optional, combined mail and file quota in MB; not possible\
+            \ to combine with mail- or file quota"
+          format: int64
+          nullable: true
+          example: 1000
+        mailQuota:
+          type: integer
+          description: optional quota in MB; not possible to combine with unifiedQuota
+          format: int64
+          nullable: true
+          example: 1000
+        fileQuota:
+          type: integer
+          description: optional quota in MB; not possible to combine with unifiedQuota
+          format: int64
+          nullable: true
+          example: 1000
+        userImage:
+          description: "optional, user image"
+          nullable: true
+          allOf:
+          - $ref: "#/components/schemas/UserImage"
+        userPermissions:
+          description: "optional, user permissions"
+          nullable: true
+          allOf:
+          - $ref: "#/components/schemas/Permissions"
+      description: user data needed to create users
+    CreateUser v2:
+      required:
+      - givenName
+      - mail
+      - name
+      - password
+      - surName
+      type: object
+      properties:
+        name:
+          type: string
+          description: mandatory
+          example: john.doe
+        password:
+          type: string
+          description: mandatory
+        givenName:
+          type: string
+          description: mandatory
+          example: John
+        surName:
+          type: string
+          description: mandatory
+          example: Surname
+        mail:
+          type: string
+          description: mandatory
+          example: john@example.com
+        displayName:
+          type: string
+          description: "optional, will be automatically set depending on givenName\
+            \ and surName if not specified"
+          nullable: true
+          example: John Doe
+        classOfService:
+          type: array
+          description: "optional, default will be used if not specified"
+          nullable: true
+          example:
+          - cloud_pim
+          - cloud_nine
+          items:
+            type: string
+        language:
+          type: string
+          description: "optional locale like en_US, de_DE, etc; default will be used\
+            \ if not specified"
+          nullable: true
+          example: de_DE
+        aliases:
+          type: array
+          description: "optional, defaults to mandatory mail address"
+          nullable: true
+          example:
+          - alias1@example.com
+          - alias2@example.com
+          items:
+            type: string
+        timezone:
+          type: string
+          description: "optional, default will be used if not specified"
+          nullable: true
+          example: Europe/Berlin
+        spamLevel:
+          type: string
+          description: "Optional, The spamlevel has to be one of <code>low</code>,\
+            \ <code>medium</code> or <code>high</code>. If not provided, <code>high</code>\
+            \ will be used."
+          nullable: true
+        unifiedQuota:
+          type: integer
+          description: "optional, combined mail and file quota in MB; not possible\
+            \ to combine with mail- or file quota"
+          format: int64
+          nullable: true
+          example: 1000
+        mailQuota:
+          type: integer
+          description: optional quota in MB; not possible to combine with unifiedQuota
+          format: int64
+          nullable: true
+          example: 1000
+        fileQuota:
+          type: integer
+          description: optional quota in MB; not possible to combine with unifiedQuota
+          format: int64
+          nullable: true
+          example: 1000
+        userImage:
+          description: "optional, user image"
+          nullable: true
+          allOf:
+          - $ref: "#/components/schemas/UserImage"
+        userPermissions:
+          description: "optional, user permissions"
+          nullable: true
+          allOf:
+          - $ref: "#/components/schemas/Permissions"
+        userAdminEnabled:
+          type: boolean
+          description: "optional, user admin role"
+          nullable: true
+        emailBackupEnabled:
+          type: boolean
+          description: "optional, email backup enabled"
+          nullable: true
+      description: user data needed to create users
+    DomainCatchall:
+      required:
+      - domain
+      - login
+      type: object
+      properties:
+        domain:
+          type: string
+          description: mail domain for the domain catchall
+          example: example.com
+        login:
+          type: string
+          description: user login name for the given domain
+          example: catchall@example.com
+      description: Domain catchall data type
+    GetBaseUser:
+      required:
+      - aliases
+      - classOfService
+      - displayName
+      - givenName
+      - isContextAdmin
+      - mail
+      - name
+      - spamLevel
+      - surName
+      - timezone
+      type: object
+      properties:
+        name:
+          type: string
+        givenName:
+          type: string
+        surName:
+          type: string
+        mail:
+          type: string
+        displayName:
+          type: string
+        isContextAdmin:
+          type: boolean
+          description: "If set to true, the user is the Context Admin"
+        classOfService:
+          type: array
+          items:
+            type: string
+        language:
+          type: string
+          description: "Locale like en_US, de_DE, etc"
+          nullable: true
+        aliases:
+          type: array
+          nullable: true
+          items:
+            type: string
+        timezone:
+          type: string
+          nullable: true
+        spamLevel:
+          type: string
+          nullable: true
+        unifiedQuota:
+          type: integer
+          description: Combined mail- and file quota in MB
+          format: int64
+          nullable: true
+        mailQuota:
+          type: integer
+          description: Mail quota in MB in case unifiedQuota not used
+          format: int64
+          nullable: true
+        fileQuota:
+          type: integer
+          description: File quota in MB in case unifiedQuota not used
+          format: int64
+          nullable: true
+        usedMailQuota:
+          type: integer
+          description: Mail quota usage in MB in case unifiedQuota not used
+          format: int64
+          nullable: true
+        usedFileQuota:
+          type: integer
+          description: File quota usage in MB in case unifiedQuota not used
+          format: int64
+          nullable: true
+        usedQuota:
+          type: integer
+          description: Combined mail- and file quota in MB in case unified quota is
+            enabled
+          format: int64
+          nullable: true
+        guestId:
+          type: integer
+          description: "If present, the user is a guest user"
+          format: int32
+          nullable: true
+        uid:
+          type: integer
+          description: Internal uid number. Only available in case <i>includeid</i>
+            parameter is specified
+          format: int32
+          nullable: true
+        webLoginEnabled:
+          type: boolean
+          description: Is user enabled to login to webmail? Only available in case
+            <i>includewebloginenabled</i> parameter is specified
+          nullable: true
+        userImage:
+          description: Should the image of the user be returned? Only available in
+            case <i>includeimage</i> parameter is specified
+          nullable: true
+          allOf:
+          - $ref: "#/components/schemas/UserImage"
+      description: User as returned by the list user API
+    GetContext v1:
+      required:
+      - name
+      - theme
+      type: object
+      properties:
+        name:
+          type: string
+        maxQuota:
+          type: integer
+          description: Context file quota
+          format: int64
+          nullable: true
+        usedQuota:
+          type: integer
+          description: Context file quota usage
+          format: int64
+          nullable: true
+        theme:
+          nullable: true
+          allOf:
+          - $ref: "#/components/schemas/Theme"
+      description: Context as returned by the API
+    GetContext v2:
+      required:
+      - name
+      type: object
+      properties:
+        name:
+          type: string
+        maxQuota:
+          type: integer
+          description: Context file quota
+          format: int64
+          nullable: true
+        usedQuota:
+          type: integer
+          description: Context file quota usage
+          format: int64
+          nullable: true
+        theme:
+          description: Theming of given context
+          nullable: true
+          allOf:
+          - $ref: "#/components/schemas/Theme"
+        toplevelBrandName:
+          type: string
+          description: "Name of toplevel brand, if context owner brand is a sub-brand"
+          nullable: true
+        brandName:
+          type: string
+          description: Name of contexts owner brand
+          nullable: true
+        maxUser:
+          type: integer
+          description: "Maximum amount of users, if set. The context admin does not\
+            \ count as user so that each context has always one user more than specified."
+          format: int32
+          nullable: true
+      description: Context as returned by the API
+    GetUser v1:
+      required:
+      - context
+      type: object
+      properties:
+        context:
+          $ref: "#/components/schemas/UserContext"
+        userPermissions:
+          description: Should the permissions of the user be returned? Only available
+            in case <i>includepermissions</i> parameter is specified
+          nullable: true
+          allOf:
+          - $ref: "#/components/schemas/Permissions"
+      description: User as returned by the API
+      allOf:
+      - $ref: "#/components/schemas/GetBaseUser"
+    GetUser v2:
+      required:
+      - contextName
+      - emailBackupEnabled
+      type: object
+      properties:
+        contextName:
+          type: string
+        userPermissions:
+          description: Should the permissions of the user be returned? Only available
+            in case <i>includepermissions</i> parameter is specified
+          nullable: true
+          allOf:
+          - $ref: "#/components/schemas/Permissions"
+        userAdminEnabled:
+          type: boolean
+          description: "If present, the user has admin rights in the current context.\
+            \ Only available in case <i>includeuseradminenabled</i> parameter is specified"
+          nullable: true
+        emailBackupEnabled:
+          type: boolean
+          nullable: true
+      description: User as returned by the API
+      allOf:
+      - $ref: "#/components/schemas/GetBaseUser"
+    ListUser v1:
+      required:
+      - context
+      type: object
+      properties:
+        context:
+          $ref: "#/components/schemas/UserContext"
+      description: User as returned by the list user API
+      allOf:
+      - $ref: "#/components/schemas/GetBaseUser"
+    ListUser v2:
+      required:
+      - contextName
+      type: object
+      properties:
+        contextName:
+          type: string
+        userAdminEnabled:
+          type: boolean
+          description: "If present, the user has admin rights in the current context.\
+            \ Only available in case <i>includeuseradminenabled</i> parameter is specified"
+          nullable: true
+      description: User as returned by the list user API
+      allOf:
+      - $ref: "#/components/schemas/GetBaseUser"
+    MailForward:
+      required:
+      - address
+      - forwardTo
+      type: object
+      properties:
+        address:
+          type: string
+          description: Local email address
+          example: jane@example.com
+        forwardTo:
+          type: array
+          description: One or more local or remote recipients.
+          example:
+          - local@example.local
+          - remote@example.remote
+          items:
+            type: string
+        spamLevel:
+          type: string
+          description: "Optional spam level. If not specified, a system default will\
+            \ be used"
+          nullable: true
+      description: Mail forward containing local address and one or more addresses
+        where to forward it to. Note that the amount of forward recipients are limited
+        by configuration.
+    Permissions:
+      type: object
+      properties:
+        send:
+          type: boolean
+          description: "User is allowed to send mail. Optional, default used or kept\
+            \ if not specified"
+          nullable: true
+          example: true
+        receive:
+          type: boolean
+          description: "User is allowed to receive mail. Optional, default used or\
+            \ kept if not specified"
+          nullable: true
+          example: false
+        maillogin:
+          type: boolean
+          description: "User can login using IMAP from external, webmail is not affected.\
+            \ Optional, default used or kept if not specified"
+          nullable: true
+          example: true
+        weblogin:
+          type: boolean
+          description: "User can login to OX App Suite. Optional, default used or\
+            \ kept if not specified"
+          nullable: true
+          example: false
+        editPassword:
+          type: boolean
+          description: "User can change password in OX App Suite. Optional, default\
+            \ used or kept if not specified"
+          nullable: true
+          example: true
+      description: Control various user permissions
+    Spamlevel:
+      required:
+      - spamlevel
+      type: object
+      properties:
+        spamlevel:
+          type: string
+      description: Spamlevel
+    Theme:
+      type: object
+      properties:
+        mainColor:
+          type: string
+          description: "optional, default used if not specified"
+          nullable: true
+          example: "#283f73"
+        linkColor:
+          type: string
+          description: "optional, default used if not specified"
+          nullable: true
+          example: "#283f73"
+        toolbarColor:
+          type: string
+          description: "optional, default used if not specified"
+          nullable: true
+          example: "#283f73"
+        logoUrlLight:
+          type: string
+          description: "optional, default used if not specified"
+          nullable: true
+          example: http://example.com/light.png
+        logoUrlDark:
+          type: string
+          description: "optional, default used if not specified. Can only be specified\
+            \ in combination with logoUrlLight."
+          nullable: true
+          example: http://example.com/dark.png
+        logoWidth:
+          type: string
+          description: "optional, default used if not specified"
+          nullable: true
+          example: "60"
+        logoHeight:
+          type: string
+          description: "optional, default used if not specified"
+          nullable: true
+          example: auto
+        topbarBackground:
+          type: string
+          description: "optional, default used if not specified"
+          nullable: true
+          example: "#283f73"
+        topbarHover:
+          type: string
+          description: "optional, default used if not specified"
+          nullable: true
+          example: "rgba(0, 0, 0, 0.3)"
+        topbarColor:
+          type: string
+          description: "optional, default used if not specified"
+          nullable: true
+          example: "#ddd"
+        topbarSelected:
+          type: string
+          description: "optional, default used if not specified"
+          nullable: true
+          example: "#eee"
+        listSelected:
+          type: string
+          description: "optional, default used if not specified"
+          nullable: true
+          example: "#aaa"
+        listHover:
+          type: string
+          description: "optional, default used if not specified"
+          nullable: true
+          example: "#f7f7f7"
+        listSelectedFocus:
+          type: string
+          description: "optional, default used if not specified"
+          nullable: true
+          example: "#283f73"
+        folderBackground:
+          type: string
+          description: "optional, default used if not specified"
+          nullable: true
+          example: "#f5f5f5"
+        folderSelected:
+          type: string
+          description: "optional, default used if not specified"
+          nullable: true
+          example: "rgba(0, 0, 0, 0.1)"
+        folderHover:
+          type: string
+          description: "optional, default used if not specified"
+          nullable: true
+          example: "rgba(0, 0, 0, 0.05)"
+        folderSelectedFocus:
+          type: string
+          description: "optional, default used if not specified"
+          nullable: true
+          example: "#283f73"
+        mailDetailCSS:
+          type: string
+          description: "optional, default used if not specified"
+          nullable: true
+          example: "body { color: #000 !important } h1 { color: red}"
+        serverContact:
+          type: string
+          description: "optional, default used if not specified"
+          nullable: true
+          example: My Example Org | <a href=contactPath target="_blank">Contact</a>
+      description: Attributes to influence UI Scheme
+    UserContext:
+      required:
+      - id
+      - name
+      type: object
+      properties:
+        name:
+          type: string
+        id:
+          type: integer
+          format: int32
+          nullable: true
+      description: Will be replaced with the context name in API v2
+      deprecated: true
+    UserCount:
+      required:
+      - count
+      type: object
+      properties:
+        count:
+          type: integer
+          format: int32
+      description: UserCount
+    UserImage:
+      required:
+      - image
+      - type
+      type: object
+      properties:
+        image:
+          type: string
+          description: Image bytes of the user
+          format: byte
+          example: SGVsbG8gV29ybGQ=
+        type:
+          type: string
+          description: Image type e.g. 'jpeg'
+          example: jpeg
+      description: User image returned by the API
+  securitySchemes:
+    BrandAuth:
+      type: http
+      description: |-
+        Basic Authentication. A Brand name and password must be provided.
+        A curl example would be `curl -u mybrand:secret https://provisioning.eu.appsuite.cloud/cloudapi/v2/contexts` to list all context of that brand.
+      scheme: basic
